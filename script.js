@@ -1,62 +1,72 @@
 const graphic = document.getElementById("graphic");
-let posX = window.innerWidth / 2;
-let posY = window.innerHeight / 2;
 
-// 움직임 처리 함수
+let rotation = 0;
+
+// 현재 기기 방향을 기준으로 화면 내 우측 위치 계산
+function updatePosition(beta, gamma) {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+
+  // 화면 기준의 우측 방향 추정 (기기 기울기에 따라 조절)
+  // 기본: 화면 중심에서 오른쪽으로 offset
+  const offset = 100;
+
+  let x = w / 2 + (gamma / 90) * (w / 2 - offset);  // 좌우 기울임 기준 위치
+  let y = h / 2 - (beta / 90) * (h / 2 - offset);   // 상하 기울임 기준 위치
+
+  // 안전한 범위 내로 제한
+  x = Math.max(40, Math.min(x, w - 40));
+  y = Math.max(40, Math.min(y, h - 40));
+
+  graphic.style.left = `${x}px`;
+  graphic.style.top = `${y}px`;
+}
+
+// 중력 방향 기준으로 회전 각도 계산
 function handleMotion(event) {
   const ag = event.accelerationIncludingGravity;
   const x = ag.x;
   const y = ag.y;
 
-  const magnitude = Math.sqrt(x * x + y * y);
-  if (magnitude === 0) return;
+  const angleRad = Math.atan2(y, x);
+  rotation = angleRad * (180 / Math.PI) + 90;
 
-  // 중력 반대 방향 기준의 '우측 방향' 벡터 계산
-  const dirX = -y / magnitude;
-  const dirY = x / magnitude;
-
-  const speed = 4;
-  posX += dirX * speed;
-  posY += dirY * speed;
-
-  const w = 80;
-  const h = 80;
-
-  if (posX < -w) posX = window.innerWidth;
-  if (posX > window.innerWidth) posX = -w;
-  if (posY < -h) posY = window.innerHeight;
-  if (posY > window.innerHeight) posY = -h;
-
-  graphic.style.left = `${posX}px`;
-  graphic.style.top = `${posY}px`;
+  graphic.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
 }
 
+// 기기 회전 방향에 따라 위치 조정
+function handleOrientation(event) {
+  const beta = event.beta;   // front-back tilt
+  const gamma = event.gamma; // left-right tilt
+  updatePosition(beta, gamma);
+}
 
-// iOS 권한 요청 처리
-function setupMotion() {
+// iOS 권한 요청 포함
+function setup() {
   if (
     typeof DeviceMotionEvent !== "undefined" &&
     typeof DeviceMotionEvent.requestPermission === "function"
   ) {
-    // Safari (iOS)
-    DeviceMotionEvent.requestPermission()
-      .then((response) => {
-        if (response === "granted") {
-          console.log("✅ 권한 허용됨");
-          window.addEventListener("devicemotion", handleMotion);
-        } else {
-          alert("센서 권한을 허용해야 움직일 수 있어요.");
-        }
-      })
-      .catch((err) => {
-        console.error("❌ 권한 요청 실패:", err);
-      });
+    document.body.addEventListener("click", () => {
+      Promise.all([
+        DeviceMotionEvent.requestPermission(),
+        DeviceOrientationEvent.requestPermission()
+      ])
+        .then(([motionRes, orientRes]) => {
+          if (motionRes === "granted" && orientRes === "granted") {
+            window.addEventListener("devicemotion", handleMotion);
+            window.addEventListener("deviceorientation", handleOrientation);
+          } else {
+            alert("센서 권한이 필요해요 📱");
+          }
+        })
+        .catch(console.error);
+    });
   } else {
     // Android 등
-    console.log("✅ 권한 요청 없이 센서 사용 가능");
     window.addEventListener("devicemotion", handleMotion);
+    window.addEventListener("deviceorientation", handleOrientation);
   }
 }
 
-// Safari는 반드시 터치 후에 권한 요청 가능
-document.body.addEventListener("click", setupMotion, { once: true });
+setup();
