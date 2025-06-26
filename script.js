@@ -5,7 +5,7 @@ const arrowCount = 10;
 // 초기 화살표 여러 개 생성
 for (let i = 0; i < arrowCount; i++) {
   const el = document.createElement("img");
-  el.src = "arrow.svg"; // 수빈이 SVG 이름에 맞게 교체
+  el.src = "graphic.svg"; // 수빈이 SVG 이름에 맞게 교체
   el.className = "arrow";
   container.appendChild(el);
 
