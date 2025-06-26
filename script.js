@@ -8,10 +8,10 @@ let moveX = 0;
 let moveY = -1;
 let angleDeg = 0;
 
-// SVG로 된 화살표 엘리먼트 여러 개 생성
+// SVG 이미지 여러 개 생성
 for (let i = 0; i < arrowCount; i++) {
   const img = document.createElement("img");
-  img.src = "graphic.svg"; // 수빈이 svg 이름
+  img.src = "graphic.svg"; // 수빈이 파일 graphic.svg 사용
   img.className = "arrow";
   container.appendChild(img);
 
@@ -21,7 +21,7 @@ for (let i = 0; i < arrowCount; i++) {
   });
 }
 
-// 중력 기준 우측 상단 방향 계산
+// 센서 데이터로 방향 계산
 function handleMotion(event) {
   const ag = event.accelerationIncludingGravity;
   const gx = ag.x;
@@ -30,11 +30,10 @@ function handleMotion(event) {
   const magnitude = Math.sqrt(gx * gx + gy * gy);
   if (magnitude === 0) return;
 
-  // 중력 벡터
   const gxN = gx / magnitude;
   const gyN = gy / magnitude;
 
-  // 중력 기준의 우측 상단 방향 = 중력 반대의 법선 방향 + 상승 방향
+  // 우측 상단 방향 벡터 계산 (중력 기준)
   let tx = gyN - gxN;
   let ty = -gxN - gyN;
 
@@ -48,7 +47,7 @@ function handleMotion(event) {
   angleDeg = angleRad * 180 / Math.PI;
 }
 
-// 화살표 애니메이션
+// 애니메이션 실행
 function animate() {
   requestAnimationFrame(animate);
 
@@ -80,18 +79,16 @@ function animate() {
   }
 }
 
-// iOS 센서 권한 요청 포함
+// iOS 권한 요청 포함 센서 초기화
 function setup() {
   if (
     typeof DeviceMotionEvent !== "undefined" &&
     typeof DeviceMotionEvent.requestPermission === "function"
   ) {
     document.body.addEventListener("click", () => {
-      Promise.all([
-        DeviceMotionEvent.requestPermission()
-      ])
-        .then(([motionPerm]) => {
-          if (motionPerm === "granted") {
+      DeviceMotionEvent.requestPermission()
+        .then((response) => {
+          if (response === "granted") {
             window.addEventListener("devicemotion", handleMotion);
             animate();
           } else {
@@ -101,7 +98,6 @@ function setup() {
         .catch(console.error);
     }, { once: true });
   } else {
-    // Android 등
     window.addEventListener("devicemotion", handleMotion);
     animate();
   }
