@@ -11,8 +11,9 @@ function handleMotion(event) {
   const magnitude = Math.sqrt(x * x + y * y);
   if (magnitude === 0) return;
 
-  const dirX = y / magnitude;
-  const dirY = -x / magnitude;
+  // 중력 반대 방향 기준의 '우측 방향' 벡터 계산
+  const dirX = -y / magnitude;
+  const dirY = x / magnitude;
 
   const speed = 4;
   posX += dirX * speed;
@@ -29,6 +30,7 @@ function handleMotion(event) {
   graphic.style.left = `${posX}px`;
   graphic.style.top = `${posY}px`;
 }
+
 
 // iOS 권한 요청 처리
 function setupMotion() {
