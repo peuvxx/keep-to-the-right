@@ -1,29 +1,26 @@
 const container = document.getElementById("container");
 const arrows = [];
 const arrowCount = 10;
+let posX = window.innerWidth / 2;
+let posY = window.innerHeight / 2;
+let dirX = 0;
+let dirY = -1;
+let angleDeg = 0;
 
-// 초기 화살표 여러 개 생성
+// 화살표 여러 개 생성
 for (let i = 0; i < arrowCount; i++) {
   const el = document.createElement("img");
-  el.src = "graphic.svg"; // 수빈이 SVG 이름에 맞게 교체
+  el.src = "graphic.svg"; // ← 수빈이의 실제 화살표 SVG 파일 이름!
   el.className = "arrow";
   container.appendChild(el);
 
   arrows.push({
     el,
-    // 거리 간격 설정
-    offset: i * -80
+    offset: i * -80 // 간격 조절
   });
 }
 
-let posX = window.innerWidth / 2;
-let posY = window.innerHeight / 2;
-
-let dirX = 0;
-let dirY = -1;
-let angleDeg = 0;
-
-// 중력 반대 방향 계산
+// 센서 방향 감지
 function handleMotion(event) {
   const ag = event.accelerationIncludingGravity;
   const gx = ag.x;
@@ -35,27 +32,22 @@ function handleMotion(event) {
   dirX = -gx / magnitude;
   dirY = -gy / magnitude;
 
-  // 회전 각도 계산
   const angleRad = Math.atan2(dirY, dirX);
   angleDeg = angleRad * 180 / Math.PI;
 }
 
-// 애니메이션 루프
+// 애니메이션 실행
 function animate() {
   requestAnimationFrame(animate);
 
-  // 전진
   const speed = 2;
   posX += dirX * speed;
   posY += dirY * speed;
 
-  // 우측 방향(법선 벡터)
   const rightX = -dirY;
   const rightY = dirX;
-
   const offsetFromCenter = 100;
 
-  // 각 화살표 배치
   for (let i = 0; i < arrows.length; i++) {
     const a = arrows[i];
     const step = a.offset;
@@ -68,7 +60,7 @@ function animate() {
     a.el.style.transform = `translate(-50%, -50%) rotate(${angleDeg}deg)`;
   }
 
-  // 루프 거리 재사용
+  // 루프처럼 offset 재사용
   for (let a of arrows) {
     a.offset += speed;
     if (a.offset > 100) {
@@ -77,6 +69,7 @@ function animate() {
   }
 }
 
+// 센서 권한 요청 처리
 function setup() {
   if (
     typeof DeviceMotionEvent !== "undefined" &&
@@ -93,11 +86,12 @@ function setup() {
           }
         })
         .catch(console.error);
-    });
+    }, { once: true });
   } else {
+    // Android 등
     window.addEventListener("devicemotion", handleMotion);
     animate();
   }
 }
 
-setup();
+window.addEventListener("DOMContentLoaded", setup);
