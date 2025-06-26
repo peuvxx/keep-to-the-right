@@ -1,6 +1,6 @@
 body {
   margin: 0;
-  background: #333;
+  background: #111;
   overflow: hidden;
 }
 
@@ -9,10 +9,11 @@ body {
   bottom: 20px;
   width: 100%;
   text-align: center;
-  color: #aaa;
+  color: #ffffff;
   font-family: sans-serif;
-  font-size: 1rem;
+  font-size: 0.95rem;
   pointer-events: none;
+  z-index: 1000;
 }
 
 #container {
