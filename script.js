@@ -1,43 +1,82 @@
-const graphic = document.getElementById("graphic");
+const container = document.getElementById("container");
+const arrows = [];
+const arrowCount = 10;
+
+// 초기 화살표 여러 개 생성
+for (let i = 0; i < arrowCount; i++) {
+  const el = document.createElement("img");
+  el.src = "arrow.svg"; // 수빈이 SVG 이름에 맞게 교체
+  el.className = "arrow";
+  container.appendChild(el);
+
+  arrows.push({
+    el,
+    // 거리 간격 설정
+    offset: i * -80
+  });
+}
 
 let posX = window.innerWidth / 2;
 let posY = window.innerHeight / 2;
 
+let dirX = 0;
+let dirY = -1;
+let angleDeg = 0;
+
+// 중력 반대 방향 계산
 function handleMotion(event) {
   const ag = event.accelerationIncludingGravity;
-  const x = ag.x;
-  const y = ag.y;
+  const gx = ag.x;
+  const gy = ag.y;
 
-  const magnitude = Math.sqrt(x * x + y * y);
+  const magnitude = Math.sqrt(gx * gx + gy * gy);
   if (magnitude === 0) return;
 
-  // 중력 반대 방향 (직진 방향)
-  const dirX = -x / magnitude;
-  const dirY = -y / magnitude;
+  dirX = -gx / magnitude;
+  dirY = -gy / magnitude;
 
-  // 중력 반대 방향의 우측 방향 (법선 벡터)
-  const rightX = -dirY;
-  const rightY = dirX;
+  // 회전 각도 계산
+  const angleRad = Math.atan2(dirY, dirX);
+  angleDeg = angleRad * 180 / Math.PI;
+}
 
-  const offset = 100; // 오른쪽으로 떨어진 위치에 그리기
-  const newX = posX + rightX * offset;
-  const newY = posY + rightY * offset;
+// 애니메이션 루프
+function animate() {
+  requestAnimationFrame(animate);
 
-  // 이동 (직진)
+  // 전진
   const speed = 2;
   posX += dirX * speed;
   posY += dirY * speed;
 
-  // 회전각도 계산 (전진 방향 기준)
-  const angleRad = Math.atan2(dirY, dirX);
-  const angleDeg = angleRad * (180 / Math.PI);
+  // 우측 방향(법선 벡터)
+  const rightX = -dirY;
+  const rightY = dirX;
 
-  graphic.style.left = `${newX}px`;
-  graphic.style.top = `${newY}px`;
-  graphic.style.transform = `translate(-50%, -50%) rotate(${angleDeg}deg)`;
+  const offsetFromCenter = 100;
+
+  // 각 화살표 배치
+  for (let i = 0; i < arrows.length; i++) {
+    const a = arrows[i];
+    const step = a.offset;
+
+    const x = posX + dirX * step + rightX * offsetFromCenter;
+    const y = posY + dirY * step + rightY * offsetFromCenter;
+
+    a.el.style.left = `${x}px`;
+    a.el.style.top = `${y}px`;
+    a.el.style.transform = `translate(-50%, -50%) rotate(${angleDeg}deg)`;
+  }
+
+  // 루프 거리 재사용
+  for (let a of arrows) {
+    a.offset += speed;
+    if (a.offset > 100) {
+      a.offset = -arrowCount * 80;
+    }
+  }
 }
 
-// 권한 요청 포함
 function setup() {
   if (
     typeof DeviceMotionEvent !== "undefined" &&
@@ -48,6 +87,7 @@ function setup() {
         .then((res) => {
           if (res === "granted") {
             window.addEventListener("devicemotion", handleMotion);
+            animate();
           } else {
             alert("센서 권한이 필요해요!");
           }
@@ -56,8 +96,8 @@ function setup() {
     });
   } else {
     window.addEventListener("devicemotion", handleMotion);
+    animate();
   }
 }
 
 setup();
-
